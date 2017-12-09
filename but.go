@@ -19,62 +19,121 @@ func combineColor(color ColorName, isBackgroundColor bool) outPutSet {
 	return 0
 }
 
-func (x *printer) updateSets(b outPutSet) *printer {
+func newPrintControlSequence(cc controlCode, params ...string) string {
+	return fmt.Sprintf(PRINTER_FORMAT, strings.Join(params, ";"), cc)
+}
 
-	pre := "\033["
-	su := "m"
-	if strings.HasPrefix(x.prefix, pre) && strings.HasSuffix(x.prefix, su) {
-		s := strings.TrimPrefix(x.prefix, pre)
-		s = strings.TrimSuffix(s, su)
-		body := strings.Split(s, ";")
-		body = append(body, fmt.Sprintf("%d", b))
-		x.prefix = strings.Replace(PRINTER_FORMAT, "{{params}}", strings.Join(body, ";"), -1)
-	} else {
-		x.prefix = strings.Replace(PRINTER_FORMAT, "{{params}}", fmt.Sprintf("%d", b), -1)
+func defaultControlSequence() string {
+	return newPrintControlSequence(CONTROL_M, "0")
+}
+
+func addSet(src string, controlSequence string) string {
+	return controlSequence + src
+}
+
+func delSet(src string, controlSequence string) string {
+	for strings.Contains(src, controlSequence) {
+		src = strings.Trim(src, controlSequence)
 	}
-	x.updateSufix()
+	return src
+}
 
+func (x *printer) delSet(isSuffix bool, controlSequence string) {
+	if isSuffix {
+		x.suffix = delSet(x.suffix, controlSequence)
+		return
+	}
+	x.prefix = delSet(x.prefix, controlSequence)
+}
+
+func (x *printer) addSet(isSuffix bool, controlSequence string) *printer {
+	x.delSet(isSuffix, controlSequence)
+	if isSuffix {
+		x.suffix = addSet(x.suffix, controlSequence)
+	} else {
+		x.prefix = addSet(x.prefix, controlSequence)
+	}
 	return x
 }
 
-func (x *printer) updateSufix() {
-	if x.sufix != PRINTER_DEFAULT {
-		x.sufix = PRINTER_DEFAULT
-	}
+func (x *printer) control(isSuffix bool, cc controlCode, params ...string) *printer {
+	cs := newPrintControlSequence(cc, params...)
+	return x.addSet(isSuffix, cs)
+}
+
+// func (x *printer) updateSets(b outPutSet) *printer {
+// 	pre := "\033["
+// 	su := "m"
+// 	if strings.HasPrefix(x.prefix, pre) && strings.HasSuffix(x.prefix, su) {
+// 		s := strings.TrimPrefix(x.prefix, pre)
+// 		s = strings.TrimSuffix(s, su)
+// 		body := strings.Split(s, ";")
+// 		body = append(body, fmt.Sprintf("%d", b))
+// 		x.prefix = strings.Replace(PRINTER_FORMAT, "{{params}}", strings.Join(body, ";"), -1)
+// 	} else {
+// 		x.prefix = strings.Replace(PRINTER_FORMAT, "{{params}}", fmt.Sprintf("%d", b), -1)
+// 	}
+// 	x.updateSufix()
+
+// 	return x
+// }
+
+func (x *printer) finalSufix() {
+	x.control(true, CONTROL_M, "0")
 }
 
 func (x *printer) Color(color ColorName, isBackgroundColor bool) Buter {
 	c := combineColor(color, isBackgroundColor)
 	if c > 0 {
-		return x.updateSets(c)
+		x.control(false, CONTROL_M, fmt.Sprintf("%d", c))
 	}
 	return x
 }
 
 func (x *printer) Show(sets ...outPutSet) Buter {
+	var setStr []string
 	for _, set := range sets {
-		x.updateSets(set)
+		setStr = append(setStr, fmt.Sprintf("%d", set))
 	}
+	x.control(false, CONTROL_M, setStr...)
 	return x
 }
 
+func cutReturns(str *string) int {
+	var count int
+	for strings.HasSuffix(*str, "\n") {
+		*str = strings.TrimSuffix(*str, "\n")
+		count++
+	}
+	return count
+}
+
+func (x *printer) OneLinePrint(isLastUpdate bool) {
+	length := len(fmt.Sprintf(x.format, x.args...))
+	if !isLastUpdate {
+		cutReturns(&x.format)
+		x.control(true, CONTROL_D, fmt.Sprintf("%d", length))
+	}
+	x.Print()
+}
+
 func (x *printer) Print() {
+	x.finalSufix()
 	f, args := x.formating()
 	x.p(x.w, f, args...)
 }
 
 func (x *printer) formating() (formation string, args []interface{}) {
-	f := x.format
+	returnsCount := cutReturns(&x.format)
 	var returns string
 
-	for strings.HasSuffix(f, "\n") {
-		f = strings.TrimSuffix(f, "\n")
+	for i := 0; i < returnsCount; i++ {
 		returns += "\n"
 	}
 
-	f = x.prefix + f + x.sufix + returns
+	x.format = x.prefix + x.format + x.suffix + returns
 
-	return f, x.args
+	return x.format, x.args
 }
 
 func (x *printer) String() string {

@@ -27,4 +27,9 @@ func TestButer(t *testing.T) {
 		Color(COLOR_RED, true).Color(COLOR_BLACK, false).
 		Show(SET_UNDERLINE).
 		Print()
+
+	for i := 0; i < 101; i++ {
+		NewButer(nil, "更新: %3d\n", i).Color(COLOR_BLUE, false).Show(SET_BOLD).OneLinePrint(i == 100)
+		time.Sleep(time.Millisecond * 100)
+	}
 }

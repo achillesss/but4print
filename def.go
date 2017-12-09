@@ -6,11 +6,13 @@ type Buter interface {
 	Color(color ColorName, isBackgroundColor bool) Buter
 	Show(...outPutSet) Buter
 	Print()
+	OneLinePrint(bool)
 	String() string
 }
 
 type ColorName int
 type outPutSet int
+type controlCode string
 
 const (
 	// 0(黑)、1(红)、2(绿)、 3(黄)、4(蓝)、5(洋红)、6(青)、7(白)
@@ -38,8 +40,18 @@ const (
 	COLOR_FOREGROUND outPutSet = 30
 	COLOR_BACKGROUND outPutSet = 40
 
-	PRINTER_FORMAT  = "\033[{{params}}m"
-	PRINTER_DEFAULT = "\033[0m"
+	CONTROL_M         controlCode = "m"  // default
+	CONTROL_A         controlCode = "A"  // up
+	CONTROL_B         controlCode = "B"  // down
+	CONTROL_C         controlCode = "C"  // right
+	CONTROL_D         controlCode = "D"  // left
+	CONTROL_CLEAR     controlCode = "2J" // clear monitor
+	CONTROL_CLEAR_END controlCode = "K"  // clear to the end of row
+	CONTROL_SAVE      controlCode = "s"  // save position
+	CONTROL_RECOVER   controlCode = "u"  // recover position
+	CONTROL_HIDE      controlCode = "?25l"
+	CONTROL_SHOW      controlCode = "?25h"
+	PRINTER_FORMAT                = "\033[%s%s"
 )
 
 type printer struct {
@@ -47,6 +59,6 @@ type printer struct {
 	format string
 	args   []interface{}
 	prefix string
-	sufix  string
+	suffix string
 	w      io.Writer
 }
