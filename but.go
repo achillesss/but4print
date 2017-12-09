@@ -110,6 +110,7 @@ func cutReturns(str *string) int {
 
 func (x *printer) OneLinePrint(isLastUpdate bool) {
 	length := len(fmt.Sprintf(x.format, x.args...))
+	x.control(false, CONTROL_CLEAR_END)
 	if !isLastUpdate {
 		cutReturns(&x.format)
 		x.control(true, CONTROL_D, fmt.Sprintf("%d", length))
