@@ -114,6 +114,9 @@ func (x *printer) OneLinePrint(isLastUpdate bool) {
 	if !isLastUpdate {
 		cutReturns(&x.format)
 		x.control(true, CONTROL_D, fmt.Sprintf("%d", length))
+		x.control(false, CONTROL_HIDE)
+	} else {
+		x.control(false, CONTROL_SHOW)
 	}
 	x.Print()
 }
