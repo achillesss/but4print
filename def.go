@@ -1,18 +1,21 @@
 package but
 
+import "io"
+
 type Buter interface {
-	Color(color colorName, isBackgroundColor bool) Buter
+	Color(color ColorName, isBackgroundColor bool) Buter
 	Show(...outPutSet) Buter
 	Print()
+	String() string
 }
 
-type colorName int
+type ColorName int
 type outPutSet int
 
 const (
 	// 0(黑)、1(红)、2(绿)、 3(黄)、4(蓝)、5(洋红)、6(青)、7(白)
 
-	COLOR_BLACK colorName = iota
+	COLOR_BLACK ColorName = iota
 	COLOR_RED
 	COLOR_GREEN
 	COLOR_YELLOW
@@ -40,9 +43,10 @@ const (
 )
 
 type printer struct {
-	p      func(format string, args ...interface{}) (n int, err error)
+	p      func(w io.Writer, format string, args ...interface{})
 	format string
 	args   []interface{}
 	prefix string
 	sufix  string
+	w      io.Writer
 }

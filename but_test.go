@@ -14,13 +14,17 @@ func TestButer(t *testing.T) {
 		return time.Now().String()
 	}
 
-	NewButer(format0, arg0).
+	NewButer(
+		nil,
+		format0,
+		arg0,
+	).
 		Color(COLOR_CYAN, false).
 		Show(SET_BOLD).
 		Print()
 
-	NewButer(format1, arg1()).
-		Color(COLOR_RED, true).
-		Show(SET_REVERSAL, SET_UNDERLINE).
+	NewButer(nil, format1, arg1()).
+		Color(COLOR_RED, true).Color(COLOR_BLACK, false).
+		Show(SET_UNDERLINE).
 		Print()
 }
