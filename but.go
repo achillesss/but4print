@@ -141,6 +141,7 @@ func (x *printer) formating() (formation string, args []interface{}) {
 }
 
 func (x *printer) String() string {
+	x.finalSufix()
 	f, args := x.formating()
 	return fmt.Sprintf(f, args...)
 }
